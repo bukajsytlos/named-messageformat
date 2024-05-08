@@ -164,12 +164,25 @@ public class NamedArgsMessageFormat extends Format {
       char ch = pattern.charAt(i);
       if (part == SEG_RAW) {
         if (ch == '\'') {
-          if (i + 1 < pattern.length()
-              && pattern.charAt(i + 1) == '\'') {
-            segments[part].append(ch);  // handle doubles
-            ++i;
+            if (i + 1 < pattern.length()) {
+            if (inQuote) {
+              if (pattern.charAt(i + 1) == '\'') {
+                segments[part].append(ch);
+                ++i;
+              } else {
+                inQuote = !inQuote;
+              }
+            } else {
+              if (pattern.charAt(i + 1) == '{') {
+                inQuote = !inQuote;
+              } else {
+                segments[part].append(ch);
+              }
+            }
           } else {
-            inQuote = !inQuote;
+            if (!inQuote) {
+              segments[part].append(ch);
+            }
           }
         } else if (ch == '{' && !inQuote) {
           part = SEG_INDEX;
@@ -182,9 +195,6 @@ public class NamedArgsMessageFormat extends Format {
       } else {
         if (inQuote) {              // just copy quotes in parts
           segments[part].append(ch);
-          if (ch == '\'') {
-            inQuote = false;
-          }
         } else {
           switch (ch) {
             case ',':
@@ -270,8 +280,6 @@ public class NamedArgsMessageFormat extends Format {
             result.append(",number,").append(((DecimalFormat) fmt).toPattern());
           } else if (fmt instanceof ChoiceFormat) {
             result.append(",choice,").append(((ChoiceFormat) fmt).toPattern());
-          } else {
-            // UNKNOWN
           }
         }
       } else if (fmt instanceof DateFormat) {
@@ -299,8 +307,6 @@ public class NamedArgsMessageFormat extends Format {
         } else if (index != MODIFIER_DEFAULT) {
           result.append(',').append(DATE_TIME_MODIFIER_KEYWORDS[index]);
         }
-      } else {
-        //result.append(", unknown");
       }
       result.append('}');
     }
@@ -353,47 +359,20 @@ public class NamedArgsMessageFormat extends Format {
   /**
    * Gets the formats used for the values passed into
    * <code>format</code> methods or returned from <code>parse</code>
-   * methods. The indices of elements in the returned array
-   * correspond to the argument indices used in the previously set
+   * methods. The names of elements in the returned map
+   * correspond to the argument names used in the previously set
    * pattern string.
-   * The order of formats in the returned array thus corresponds to
-   * the order of elements in the <code>arguments</code> array passed
-   * to the <code>format</code> methods or the result array returned
-   * by the <code>parse</code> methods.
    * <p>
-   * If an argument index is used for more than one format element
+   * If an argument name is used for more than one format element
    * in the pattern string, then the format used for the last such
-   * format element is returned in the array. If an argument index
+   * format element is returned from the map. If an argument name
    * is not used for any format element in the pattern string, then
-   * null is returned in the array.
+   * null is returned from the map.
    *
-   * @return the formats used for the arguments within the pattern
-   * @since 1.4
+   * @return the formats used for the arguments within the pattern by name
    */
   public Map<String, Format> getFormatsByArgumentName() {
     return new LinkedHashMap<>(formats);
-  }
-
-  /**
-   * Gets the formats used for the format elements in the
-   * previously set pattern string.
-   * The order of formats in the returned array corresponds to
-   * the order of format elements in the pattern string.
-   * <p>
-   * Since the order of format elements in a pattern string often
-   * changes during localization, it's generally better to use the
-   * {@link #getFormatsByArgumentName getFormatsByArgumentIndex}
-   * method, which assumes an order of formats corresponding to the
-   * order of elements in the <code>arguments</code> array passed to
-   * the <code>format</code> methods or the result array returned by
-   * the <code>parse</code> methods.
-   *
-   * @return the formats used for the format elements in the pattern
-   */
-  public Format[] getFormats() {
-    Format[] resultArray = new Format[maxOffset + 1];
-    System.arraycopy(formats, 0, resultArray, 0, maxOffset + 1);
-    return resultArray;
   }
 
   /**
