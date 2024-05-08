@@ -960,10 +960,8 @@ public class NamedArgsMessageFormat extends Format {
     // resize format information arrays if necessary
     if (offsetNumber >= offsets.length) {
       int newLength = offsets.length * 2;
-      Format[] newFormats = new Format[newLength];
       int[] newOffsets = new int[newLength];
       String[] newArgumentNames = new String[newLength];
-      System.arraycopy(formats, 0, newFormats, 0, maxOffset + 1);
       System.arraycopy(offsets, 0, newOffsets, 0, maxOffset + 1);
       System.arraycopy(argumentNames, 0, newArgumentNames, 0, maxOffset + 1);
       offsets = newOffsets;
